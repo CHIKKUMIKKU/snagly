@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Snagly Phone Receiver</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --ink: #111827;
+      --mute: #64748b;
+      --line: #e2e8f0;
+      --accent: #0f62fe;
+      --accent-hover: #004fd9;
+      --ok: #059669;
+      --ok-soft: #ecfdf5;
+      --warn: #b45309;
+      --warn-soft: #fffbeb;
+      --bad: #dc2626;
+      --bad-soft: #fef2f2;
+      --radius: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1120;
+        --card: #111827;
+        --ink: #f8fafc;
+        --mute: #94a3b8;
+        --line: #1e293b;
+        --accent: #3b82f6;
+        --accent-hover: #2563eb;
+        --ok: #34d399;
+        --ok-soft: rgba(16, 185, 129, 0.14);
+        --warn: #fbbf24;
+        --warn-soft: rgba(245, 158, 11, 0.14);
+        --bad: #f87171;
+        --bad-soft: rgba(239, 68, 68, 0.14);
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .shell {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+    }
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      flex: none;
+    }
+    .logo svg { width: 18px; height: 18px; }
+    .brand-name {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand-sub {
+      font-size: 11.5px;
+      color: var(--mute);
+      font-weight: 500;
+    }
+    .mode-tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--mute);
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 750;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      font-size: 12.5px;
+      color: var(--mute);
+      font-variant-numeric: tabular-nums;
+    }
+    .meta-row strong { color: var(--ink); font-weight: 600; }
+    .preview-box {
+      position: relative;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--line);
+    }
+    .preview-box video {
+      display: block;
+      width: 100%;
+      max-height: 280px;
+      background: #000;
+    }
+    .prog-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .prog-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 99px;
+      background: var(--line);
+      overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.14s ease-out;
+    }
+    .prog-fill.done { background: var(--ok); }
+    .prog-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--mute);
+      font-variant-numeric: tabular-nums;
+    }
+    .status-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 13px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .status-box.ok { background: var(--ok-soft); border-color: rgba(16, 185, 129, 0.32); color: var(--ok); }
+    .status-box.warn { background: var(--warn-soft); border-color: rgba(245, 158, 11, 0.35); color: var(--warn); }
+    .status-box.bad { background: var(--bad-soft); border-color: rgba(239, 68, 68, 0.35); color: var(--bad); }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 5px;
+      flex: none;
+    }
+    .status-box.ok .dot { background: var(--ok); }
+    .status-box.warn .dot { background: var(--warn); }
+    .status-box.bad .dot { background: var(--bad); }
+    .dot.pulse { animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.45; }
+    }
+    .btn {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.08s, border-color 0.15s;
+    }
+    .btn:active { transform: scale(0.99); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-success {
+      background: var(--ok);
+      color: #fff;
+    }
+    .btn-secondary {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--line);
+      min-height: 44px;
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+    .note-box {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      padding: 12px 13px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--mute);
+      background: var(--bg);
+    }
+    .note-box strong { color: var(--ink); display: block; margin-bottom: 3px; }
+    .foot {
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--mute);
+      padding-top: 2px;
+    }
+    .foot a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    [hidden] { display: none !important; }
+  </style>
+<script src="/_aistudio-iframe.js?v=29045eb3"></script></head>
+<body>
+  <main class="shell">
+    <header class="brand">
+      <div class="brand-left">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">Snagly Receiver</div>
+          <div class="brand-sub">Zero-install phone transfer</div>
+        </div>
+      </div>
+      <span class="mode-tag" id="modeBadge">Ready</span>
+    </header>
+
+    <!-- Mode 1: Direct URL Receiver -->
+    <section class="card" id="directView" hidden>
+      <div>
+        <h1 class="title" id="directTitle">Video</h1>
+        <div class="meta-row" id="directMeta"></div>
+      </div>
+
+      <div class="preview-box" id="directPreviewWrap" hidden>
+        <video id="directVideo" controls playsinline preload="metadata"></video>
+      </div>
+
+      <div class="status-box" id="directStatus" hidden>
+        <span class="dot" aria-hidden="true"></span>
+        <span id="directStatusText"></span>
+      </div>
+
+      <div class="prog-wrap" id="directProgWrap" hidden>
+        <div class="prog-track"><div class="prog-fill" id="directProgFill"></div></div>
+        <div class="prog-stats">
+          <span id="directProgLabel">Downloading…</span>
+          <span id="directProgPct">0%</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="directDownloadBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0l-5-5m5 5l5-5M5 20h14"/></svg>
+        <span>Download Video to Phone</span>
+      </button>
+
+      <a class="btn btn-secondary" id="directOpenLink" target="_blank" rel="noopener noreferrer">Open Video URL in Browser</a>
+
+      <div class="note-box">
+        <strong>Site requires desktop login or signed headers?</strong>
+        If direct phone download is blocked (401/403, CORS restriction, or expiring token) or if the link is an HLS/DASH playlist (<code>.m3u8</code>/<code>.mpd</code>), download the video into Snagly's Extension Vault on your PC first and scan the Mode 2 WebRTC QR to transfer it over local Wi-Fi.
+      </div>
+    </section>
+
+    <!-- Mode 2: WebRTC P2P Receiver (PeerJS 32KB chunks) -->
+    <section class="card" id="p2pView" hidden>
+      <div>
+        <h1 class="title" id="p2pTitle">Waiting for desktop connection…</h1>
+        <div class="meta-row" id="p2pMeta"></div>
+      </div>
+
+      <div class="status-box" id="p2pStatus">
+        <span class="dot pulse" id="p2pDot" aria-hidden="true"></span>
+        <span id="p2pStatusText">Connecting to your PC over WebRTC…</span>
+      </div>
+
+      <div class="prog-wrap" id="p2pProgWrap">
+        <div class="prog-track"><div class="prog-fill" id="p2pProgFill"></div></div>
+        <div class="prog-stats">
+          <span id="p2pProgBytes">0 MB</span>
+          <span id="p2pProgPct">0%</span>
+        </div>
+      </div>
+
+      <div class="preview-box" id="p2pPreviewWrap" hidden>
+        <video id="p2pVideo" controls playsinline preload="metadata"></video>
+      </div>
+
+      <button type="button" class="btn btn-success" id="p2pSaveBtn" hidden>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0l-5-5m5 5l5-5M5 20h14"/></svg>
+        <span>Save File to Phone</span>
+      </button>
+
+      <button type="button" class="btn btn-secondary" id="p2pReconnectBtn" hidden>Reconnect to PC</button>
+
+      <div class="note-box">
+        <strong>Direct Browser-to-Browser Wi-Fi Transfer</strong>
+        Files stream in 32 KB chunks directly from your desktop browser to this phone via WebRTC DataChannel—nothing is uploaded to cloud storage.
+      </div>
+    </section>
+
+    <!-- Empty / Invalid Params Landing State -->
+    <section class="card" id="emptyView" hidden>
+      <h1 class="title">Snagly Phone Receiver</h1>
+      <p style="margin:0;font-size:13.5px;color:var(--mute);line-height:1.55">
+        Scan a QR code from the Snagly Chrome extension to download a video directly or receive a saved file from your PC over WebRTC.
+      </p>
+      <a class="btn btn-primary" href="/">Visit Snagly Home</a>
+    </section>
+
+    <footer class="foot">
+      Snagly Zero-CLI Receiver · <a href="/">Snagly Home</a>
+    </footer>
+  </main>
+
+  <script src="/vendor/peerjs.min.js" onerror="window.__needPeerCdn=true"></script>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const params = new URLSearchParams(location.search);
+      const mode = (params.get("mode") || "").toLowerCase();
+
+      function fmtBytes(b) {
+        const n = Number(b) || 0;
+        if (n <= 0) return "0 MB";
+        if (n >= 1e9) return (n / 1e9).toFixed(2) + " GB";
+        if (n >= 1048576) return (n / 1048576).toFixed(1) + " MB";
+        return Math.max(1, Math.round(n / 1024)) + " KB";
+      }
+
+      function sanitizeName(name) {
+        const cleaned = String(name || "video.mp4").replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").trim();
+        return cleaned || "video.mp4";
+      }
+
+      function triggerSaveBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = sanitizeName(filename);
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => { try { URL.revokeObjectURL(url); } catch {} }, 60000);
+      }
+
+      function ensurePeerJs() {
+        if (typeof Peer !== "undefined") return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js";
+          s.onload = () => typeof Peer !== "undefined" ? resolve() : reject(new Error("PeerJS unavailable"));
+          s.onerror = () => reject(new Error("Failed to load PeerJS runtime."));
+          document.head.appendChild(s);
+        });
+      }
+
+      // ---- MODE 1: DIRECT VIDEO URL ----
+      if (mode === "direct") {
+        const rawUrl = params.get("url") || "";
+        const fileName = sanitizeName(params.get("name") || "video.mp4");
+        $("modeBadge").textContent = "Mode 1 · Direct";
+
+        if (!/^https?:\/\//i.test(rawUrl)) {
+          $("emptyView").hidden = false;
+          return;
+        }
+
+        $("directView").hidden = false;
+        $("directTitle").textContent = fileName;
+        $("directOpenLink").href = rawUrl;
+
+        let host = "";
+        try { host = new URL(rawUrl).hostname; } catch {}
+        const isSegmented = /\.(m3u8|mpd)(\?|#|$)/i.test(rawUrl);
+        $("directMeta").innerHTML = [
+          host ? `<span>Source: <strong>${host.replace(/</g, "&lt;")}</strong></span>` : "",
+          isSegmented ? `<span>Format: <strong>Playlist stream</strong></span>` : `<span>Direct URL transfer</span>`
+        ].filter(Boolean).join("");
+
+        const setDirectStatus = (kind, text) => {
+          const box = $("directStatus");
+          box.className = "status-box" + (kind ? " " + kind : "");
+          $("directStatusText").textContent = text;
+          box.hidden = false;
+        };
+
+        if (!isSegmented) {
+          const vid = $("directVideo");
+          vid.src = rawUrl;
+          vid.onloadedmetadata = () => {
+            $("directPreviewWrap").hidden = false;
+          };
+          vid.onerror = () => {
+            $("directPreviewWrap").hidden = true;
+          };
+        } else {
+          setDirectStatus("warn", "This URL is an adaptive playlist (.m3u8/.mpd). Direct mobile browsers may not save playlists as a single .mp4—download it into Snagly's Extension Vault on PC first to send via Mode 2 WebRTC.");
+        }
+
+        $("directDownloadBtn").onclick = async () => {
+          const btn = $("directDownloadBtn");
+          btn.disabled = true;
+          $("directProgWrap").hidden = false;
+          $("directProgFill").style.width = "0%";
+          $("directProgFill").classList.remove("done");
+          $("directProgPct").textContent = "0%";
+          $("directProgLabel").textContent = "Fetching video…";
+          setDirectStatus("", "Requesting video directly from source server…");
+
+          try {
+            const resp = await fetch(rawUrl, { credentials: "omit", referrerPolicy: "no-referrer" });
+            if (!resp.ok) throw new Error("HTTP " + resp.status);
+            const total = Number(resp.headers.get("content-length")) || 0;
+            const chunks = [];
+            let received = 0;
+
+            if (resp.body && resp.body.getReader) {
+              const reader = resp.body.getReader();
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (value) {
+                  chunks.push(value);
+                  received += value.byteLength;
+                  if (total > 0) {
+                    const pct = Math.min(100, Math.round((received / total) * 100));
+                    $("directProgFill").style.width = pct + "%";
+                    $("directProgPct").textContent = pct + "%";
+                    $("directProgLabel").textContent = `${fmtBytes(received)} / ${fmtBytes(total)}`;
+                  } else {
+                    $("directProgFill").style.width = "100%";
+                    $("directProgPct").textContent = fmtBytes(received);
+                    $("directProgLabel").textContent = "Downloading…";
+                  }
+                }
+              }
+            } else {
+              const buf = await resp.arrayBuffer();
+              chunks.push(new Uint8Array(buf));
+              received = buf.byteLength;
+            }
+
+            const mime = resp.headers.get("content-type") || "video/mp4";
+            const blob = new Blob(chunks, { type: mime });
+            $("directProgFill").style.width = "100%";
+            $("directProgFill").classList.add("done");
+            $("directProgPct").textContent = "100%";
+            $("directProgLabel").textContent = `${fmtBytes(blob.size)} saved`;
+            setDirectStatus("ok", "Download ready! Saving video to your phone.");
+            triggerSaveBlob(blob, fileName);
+          } catch (err) {
+            const a = document.createElement("a");
+            a.href = rawUrl;
+            a.download = fileName;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setDirectStatus(
+              "warn",
+              "Direct fetch was blocked by site CORS or desktop-only auth (" + ((err && err.message) || "network error") + "). Opened direct link instead—if that fails, download into Extension Vault on PC and use Mode 2 WebRTC QR."
+            );
+          } finally {
+            btn.disabled = false;
+          }
+        };
+        return;
+      }
+
+      // ---- MODE 2: PEERJS WEBRTC P2P RECEIVER (32KB CHUNKS) ----
+      if (mode === "p2p") {
+        const room = (params.get("room") || "").trim();
+        $("modeBadge").textContent = "Mode 2 · WebRTC P2P";
+        if (!/^[a-zA-Z0-9_-]{4,64}$/.test(room)) {
+          $("emptyView").hidden = false;
+          return;
+        }
+        $("p2pView").hidden = false;
+
+        const targetPeerId = "snagly-" + room;
+        let peer = null;
+        let activeConn = null;
+        let assembledBlob = null;
+        let fileMeta = { name: "video.mp4", size: 0, mime: "video/mp4" };
+        let receivedChunks = [];
+        let receivedBytes = 0;
+        let startedAt = 0;
+        let finished = false;
+
+        const setP2pStatus = (kind, text, pulsing = false) => {
+          const box = $("p2pStatus");
+          box.className = "status-box" + (kind ? " " + kind : "");
+          $("p2pStatusText").textContent = text;
+          const dot = $("p2pDot");
+          dot.className = "dot" + (pulsing ? " pulse" : "");
+        };
+
+        function cleanup() {
+          if (activeConn) { try { activeConn.close(); } catch {} activeConn = null; }
+          if (peer) { try { peer.destroy(); } catch {} peer = null; }
+        }
+
+        function finalizeFile(conn) {
+          if (finished) return;
+          finished = true;
+          assembledBlob = new Blob(receivedChunks, { type: fileMeta.mime || "video/mp4" });
+          receivedChunks = [];
+          const finalSize = assembledBlob.size || receivedBytes;
+          $("p2pProgFill").style.width = "100%";
+          $("p2pProgFill").classList.add("done");
+          $("p2pProgPct").textContent = "100%";
+          $("p2pProgBytes").textContent = `${fmtBytes(finalSize)} received`;
+          setP2pStatus("ok", "Transfer complete! Saving file to your phone…", false);
+
+          try {
+            const dc = conn && conn.dataChannel;
+            if (dc && dc.readyState === "open") {
+              dc.send(JSON.stringify({ type: "ack", receivedBytes: finalSize }));
+            } else if (conn && conn.open) {
+              conn.send(JSON.stringify({ type: "ack", receivedBytes: finalSize }));
+            }
+          } catch {}
+
+          const saveBtn = $("p2pSaveBtn");
+          saveBtn.hidden = false;
+          saveBtn.onclick = () => triggerSaveBlob(assembledBlob, fileMeta.name);
+
+          if (/^video\//i.test(assembledBlob.type) || /\.(mp4|webm|mov|m4v)$/i.test(fileMeta.name)) {
+            const url = URL.createObjectURL(assembledBlob);
+            const vid = $("p2pVideo");
+            vid.src = url;
+            vid.onloadedmetadata = () => { $("p2pPreviewWrap").hidden = false; };
+          }
+
+          triggerSaveBlob(assembledBlob, fileMeta.name);
+        }
+
+        function handleIncomingData(data, conn) {
+          if (typeof data === "string") {
+            try {
+              const msg = JSON.parse(data);
+              if (msg.type === "meta") {
+                fileMeta = {
+                  name: sanitizeName(msg.name || "video.mp4"),
+                  size: Number(msg.size) || 0,
+                  mime: msg.mime || "video/mp4"
+                };
+                receivedChunks = [];
+                receivedBytes = 0;
+                startedAt = Date.now();
+                finished = false;
+                $("p2pTitle").textContent = fileMeta.name;
+                $("p2pMeta").innerHTML = [
+                  `<span>Size: <strong>${fmtBytes(fileMeta.size)}</strong></span>`,
+                  `<span>Room: <strong>${room}</strong></span>`
+                ].join("");
+                $("p2pProgBytes").textContent = `0 MB / ${fmtBytes(fileMeta.size)}`;
+                setP2pStatus("", "Receiving 32 KB chunks over local WebRTC…", true);
+              } else if (msg.type === "eof") {
+                finalizeFile(conn);
+              }
+            } catch {}
+            return;
+          }
+
+          let chunk = data;
+          if (chunk instanceof Blob) {
+            chunk.arrayBuffer().then(buf => handleIncomingData(buf, conn));
+            return;
+          }
+          if (!chunk) return;
+          const len = chunk.byteLength || 0;
+          if (!len) return;
+          receivedChunks.push(chunk);
+          receivedBytes += len;
+
+          const total = fileMeta.size || receivedBytes;
+          const pct = total > 0 ? Math.min(100, Math.round((receivedBytes / total) * 100)) : 0;
+          const elapsed = Math.max(0.25, (Date.now() - (startedAt || Date.now())) / 1000);
+          const speedMbps = (receivedBytes / 1048576 / elapsed).toFixed(1);
+          $("p2pProgFill").style.width = pct + "%";
+          $("p2pProgPct").textContent = `${pct}% · ${speedMbps} MB/s`;
+          $("p2pProgBytes").textContent = `${fmtBytes(receivedBytes)} / ${fmtBytes(total)}`;
+
+          if (fileMeta.size > 0 && receivedBytes >= fileMeta.size) {
+            finalizeFile(conn);
+          }
+        }
+
+        async function startP2p() {
+          cleanup();
+          assembledBlob = null;
+          receivedChunks = [];
+          receivedBytes = 0;
+          finished = false;
+          $("p2pSaveBtn").hidden = true;
+          $("p2pReconnectBtn").hidden = true;
+          $("p2pPreviewWrap").hidden = true;
+          $("p2pProgFill").style.width = "0%";
+          $("p2pProgFill").classList.remove("done");
+          $("p2pProgPct").textContent = "0%";
+          $("p2pProgBytes").textContent = "Waiting for desktop…";
+          $("p2pMeta").innerHTML = `<span>Room: <strong>${room}</strong></span>`;
+          setP2pStatus("", "Joining WebRTC room & connecting to desktop peer…", true);
+
+          try {
+            await ensurePeerJs();
+          } catch (err) {
+            setP2pStatus("bad", (err && err.message) || "Could not load WebRTC runtime.", false);
+            $("p2pReconnectBtn").hidden = false;
+            return;
+          }
+
+          const localId = "snagly-rx-" + Math.random().toString(36).slice(2, 10);
+          peer = new Peer(localId, {
+            debug: 0,
+            config: {
+              iceServers: [
+                { urls: "stun:stun.l.google.com:19302" },
+                { urls: "stun:stun1.l.google.com:19302" }
+              ]
+            }
+          });
+
+          peer.on("open", () => {
+            setP2pStatus("", "Connecting directly to desktop QR session…", true);
+            const conn = peer.connect(targetPeerId, { reliable: true, serialization: "none" });
+            activeConn = conn;
+
+            conn.on("open", () => {
+              if (conn.dataChannel) conn.dataChannel.binaryType = "arraybuffer";
+              setP2pStatus("", "Connected directly to PC. Starting transfer…", true);
+            });
+
+            conn.on("data", data => handleIncomingData(data, conn));
+
+            conn.on("close", () => {
+              if (!finished && receivedBytes > 0 && fileMeta.size > 0 && receivedBytes >= fileMeta.size) {
+                finalizeFile(conn);
+              } else if (!finished) {
+                setP2pStatus("warn", "Desktop connection closed before transfer finished.", false);
+                $("p2pReconnectBtn").hidden = false;
+              }
+            });
+
+            conn.on("error", () => {
+              if (!finished) {
+                setP2pStatus("bad", "WebRTC data channel error. Tap Reconnect below.", false);
+                $("p2pReconnectBtn").hidden = false;
+              }
+            });
+          });
+
+          peer.on("error", err => {
+            if (!finished) {
+              const msg = err && err.type === "peer-unavailable"
+                ? "Desktop QR modal is closed or expired. Keep the QR open on your PC and tap Reconnect."
+                : ((err && err.message) || "WebRTC connection failed. Tap Reconnect below.");
+              setP2pStatus("bad", msg, false);
+              $("p2pReconnectBtn").hidden = false;
+            }
+          });
+        }
+
+        $("p2pReconnectBtn").onclick = startP2p;
+        startP2p();
+        return;
+      }
+
+      $("modeBadge").textContent = "Receiver";
+      $("emptyView").hidden = false;
+    })();
+  </script>
+</body>
+</html>
