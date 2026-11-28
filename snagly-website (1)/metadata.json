@@ -1,0 +1,6 @@
+{
+  "name": "Snagly — Video Downloader, Clip Trimmer & Private Vault",
+  "description": "Snagly v2.1 is a Chrome extension for supported video stream detection, clip trimming, subtitle tools, bulk downloads, and a PIN-protected local Vault. The current release is available at no cost; Snagly Pro is planned for a future release.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
